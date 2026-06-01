@@ -56,7 +56,7 @@ namespace WinFormsApp1
             // ── panelLeft ─────────────────────────────────────────
             panelLeft.Location = new Point(0, 0);
             panelLeft.Size = new Size(280, 420);
-            panelLeft.BackColor = Color.FromArgb(80, 40, 120);
+            panelLeft.BackColor = Color.FromArgb(0, 80, 120);
             panelLeft.Controls.Add(lblCompanyName);
             panelLeft.Controls.Add(lblCompanyTagline);
 
@@ -65,8 +65,8 @@ namespace WinFormsApp1
             {
                 using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
                     panelLeft.ClientRectangle,
-                    Color.FromArgb(60, 20, 100),
-                    Color.FromArgb(120, 60, 180),
+                    Color.FromArgb(0, 60, 100),
+                    Color.FromArgb(0, 180, 140),
                     System.Drawing.Drawing2D.LinearGradientMode.ForwardDiagonal);
                 e.Graphics.FillRectangle(brush, panelLeft.ClientRectangle);
             };
@@ -103,7 +103,7 @@ namespace WinFormsApp1
             // ── lblLogin (tab) ────────────────────────────────────
             lblLogin.Text = "Log In";
             lblLogin.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-            lblLogin.ForeColor = Color.FromArgb(150, 80, 200);
+            lblLogin.ForeColor = Color.FromArgb(0, 140, 160);
             lblLogin.AutoSize = true;
             lblLogin.Location = new Point(60, 35);
             lblLogin.Cursor = Cursors.Hand;
@@ -112,14 +112,14 @@ namespace WinFormsApp1
             // ── lblSignUp (tab) ───────────────────────────────────
             lblSignUp.Text = "Sign Up";
             lblSignUp.Font = new Font("Segoe UI", 12F, FontStyle.Regular);
-            lblSignUp.ForeColor = Color.FromArgb(150, 80, 200);
+            lblSignUp.ForeColor = Color.FromArgb(0, 140, 160);
             lblSignUp.AutoSize = true;
             lblSignUp.Location = new Point(140, 35);
             lblSignUp.Cursor = Cursors.Hand;
             lblSignUp.Click += lblSignUp_Click;
 
             // ── lblUnderline ──────────────────────────────────────
-            lblUnderline.BackColor = Color.FromArgb(150, 80, 200);
+            lblUnderline.BackColor = Color.FromArgb(0, 140, 160);
             lblUnderline.Size = new Size(lblLogin.Width, 2);
             lblUnderline.Location = new Point(lblLogin.Left, 58);
 
@@ -265,8 +265,8 @@ namespace WinFormsApp1
             if (sender is not Button btn) return;
             using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
                 btn.ClientRectangle,
-                Color.FromArgb(120, 60, 200),
-                Color.FromArgb(200, 80, 180),
+                Color.FromArgb(0, 100, 160),
+                Color.FromArgb(0, 190, 150),
                 System.Drawing.Drawing2D.LinearGradientMode.Horizontal);
             e.Graphics.FillRectangle(brush, btn.ClientRectangle);
             var text = btn.Text;
