@@ -1,3 +1,4 @@
+using System.Data;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
@@ -6,7 +7,7 @@ namespace WinFormsApp1
 {
     public static class DatabaseHelper
     {
-        private static readonly string ConnectionString =
+        public static readonly string ConnectionString =
             "Data Source=EVGENIY_LL;Initial Catalog=tourism;Integrated Security=True;Encrypt=False;TrustServerCertificate=True;";
 
         public static string HashPassword(string password)
@@ -16,9 +17,8 @@ namespace WinFormsApp1
             return Convert.ToHexString(bytes).ToLower();
         }
 
-        /// <summary>
-        /// Проверяет логин/пароль. Возвращает role_id или -1 если не найден.
-        /// </summary>
+        // ───────── Авторизация ─────────
+        // Возвращает role_id или -1 если не найден
         public static int Login(string login, string password)
         {
             string hash = HashPassword(password);
@@ -27,7 +27,7 @@ namespace WinFormsApp1
                 using var conn = new SqlConnection(ConnectionString);
                 conn.Open();
                 using var cmd = new SqlCommand(
-                    "SELECT role_id FROM users WHERE login = @login AND password = @password", conn);
+                    "SELECT roleid FROM users WHERE login = @login AND password = @password", conn);
                 cmd.Parameters.AddWithValue("@login", login);
                 cmd.Parameters.AddWithValue("@password", hash);
                 var result = cmd.ExecuteScalar();
@@ -41,10 +41,14 @@ namespace WinFormsApp1
             }
         }
 
-        /// <summary>
-        /// Регистрирует нового пользователя. Возвращает true при успехе.
-        /// </summary>
+        // ───────── Регистрация клиента (role_id = 4) ─────────
         public static bool Register(string login, string email, string password)
+        {
+            return RegisterWithRole(login, email, password, 4);
+        }
+
+        // ───────── Регистрация сотрудника директором ─────────
+        public static bool RegisterWithRole(string login, string email, string password, int roleId)
         {
             string hash = HashPassword(password);
             try
@@ -52,7 +56,6 @@ namespace WinFormsApp1
                 using var conn = new SqlConnection(ConnectionString);
                 conn.Open();
 
-                // Проверяем, не занят ли логин
                 using var checkCmd = new SqlCommand(
                     "SELECT COUNT(*) FROM users WHERE login = @login OR email = @email", conn);
                 checkCmd.Parameters.AddWithValue("@login", login);
@@ -66,16 +69,66 @@ namespace WinFormsApp1
                 }
 
                 using var cmd = new SqlCommand(
-                    "INSERT INTO users (login, email, password) VALUES (@login, @email, @password)", conn);
+                    "INSERT INTO users (login, email, password, roleid) VALUES (@login, @email, @password, @roleid)", conn);
                 cmd.Parameters.AddWithValue("@login", login);
                 cmd.Parameters.AddWithValue("@email", email);
                 cmd.Parameters.AddWithValue("@password", hash);
+                cmd.Parameters.AddWithValue("@roleid", roleId);
                 cmd.ExecuteNonQuery();
                 return true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при регистрации:\n{ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        // ───────── Получить всех сотрудников (role_id 1-3) ─────────
+        public static DataTable GetEmployees()
+        {
+            try
+            {
+                using var conn = new SqlConnection(ConnectionString);
+                conn.Open();
+                using var cmd = new SqlCommand(
+                    @"SELECT id, login, email, 
+                        CASE roleid 
+                            WHEN 1 THEN 'Директор'
+                            WHEN 2 THEN 'Менеджер'
+                            WHEN 3 THEN 'Аналитик'
+                        END AS Роль
+                      FROM users WHERE roleid IN (1, 2, 3)
+                      ORDER BY roleid, login", conn);
+                var dt = new DataTable();
+                using var adapter = new SqlDataAdapter(cmd);
+                adapter.Fill(dt);
+                return dt;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки сотрудников:\n{ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new DataTable();
+            }
+        }
+
+        // ───────── Удалить пользователя по id ─────────
+        public static bool DeleteUser(int userId)
+        {
+            try
+            {
+                using var conn = new SqlConnection(ConnectionString);
+                conn.Open();
+                using var cmd = new SqlCommand("DELETE FROM users WHERE id = @id", conn);
+                cmd.Parameters.AddWithValue("@id", userId);
+                cmd.ExecuteNonQuery();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при удалении:\n{ex.Message}", "Ошибка",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }

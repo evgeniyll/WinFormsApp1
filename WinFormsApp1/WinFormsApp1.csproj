@@ -21,6 +21,9 @@
     <Compile Update="LoginForm.Designer.cs">
       <DependentUpon>LoginForm.cs</DependentUpon>
     </Compile>
+    <Compile Update="DirectorForm.Designer.cs">
+      <DependentUpon>DirectorForm.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +33,9 @@
     </EmbeddedResource>
     <EmbeddedResource Update="LoginForm.resx">
       <DependentUpon>LoginForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="DirectorForm.resx">
+      <DependentUpon>DirectorForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
 

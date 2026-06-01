@@ -30,7 +30,6 @@ namespace WinFormsApp1
             lblSignUp.Font = new Font(lblSignUp.Font, FontStyle.Regular);
             lblUnderline.Left = lblLogin.Left;
             lblUnderline.Width = lblLogin.Width;
-
             panelLogin.Visible = true;
             panelRegister.Visible = false;
         }
@@ -41,7 +40,6 @@ namespace WinFormsApp1
             lblLogin.Font = new Font(lblLogin.Font, FontStyle.Regular);
             lblUnderline.Left = lblSignUp.Left;
             lblUnderline.Width = lblSignUp.Width;
-
             panelLogin.Visible = false;
             panelRegister.Visible = true;
         }
@@ -53,7 +51,8 @@ namespace WinFormsApp1
             string login = txtLoginUsername.Text.Trim();
             string password = txtLoginPassword.Text;
 
-            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password))
+            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password)
+                || login == "Username" || password == "Password (A-Z,a-z,0-9)")
             {
                 lblLoginError.Text = "Заполните все поля.";
                 lblLoginError.Visible = true;
@@ -69,16 +68,23 @@ namespace WinFormsApp1
             }
 
             lblLoginError.Visible = false;
-            MessageBox.Show($"Добро пожаловать, {login}!\nВаша роль: {roleId}",
-                "Успешный вход", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            // TODO: открыть следующую форму в зависимости от roleId
-            // var mainForm = new MainForm(login, roleId);
-            // mainForm.Show();
-            // this.Hide();
+            // Открываем нужную форму в зависимости от роли
+            if (roleId == 1 || roleId == 2 || roleId == 3)
+            {
+                var directorForm = new DirectorForm(login, roleId);
+                directorForm.Show();
+                this.Hide();
+            }
+            else
+            {
+                // roleId == 4 — клиент, TODO: форма клиента
+                MessageBox.Show($"Добро пожаловать, {login}!", "Вход выполнен",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
-        // ───────── Регистрация ─────────
+        // ───────── Регистрация клиента ─────────
 
         private void btnEnterRegister_Click(object sender, EventArgs e)
         {
@@ -86,7 +92,8 @@ namespace WinFormsApp1
             string email = txtRegEmail.Text.Trim();
             string password = txtRegPassword.Text;
 
-            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password)
+                || login == "Username" || email == "Email" || password == "Password (A-Z,a-z,0-9)")
             {
                 lblRegError.Text = "Заполните все поля.";
                 lblRegError.Visible = true;
@@ -119,10 +126,7 @@ namespace WinFormsApp1
 
         // ───────── Закрыть ─────────
 
-        private void btnClose_Click(object sender, EventArgs e)
-        {
-            Application.Exit();
-        }
+        private void btnClose_Click(object sender, EventArgs e) => Application.Exit();
 
         // ───────── Placeholder эффекты ─────────
 
