@@ -10,6 +10,7 @@ namespace WinFormsApp1
         public static readonly string ConnectionString =
             "Data Source=EVGENIY_LL;Initial Catalog=tourism;Integrated Security=True;Encrypt=False;TrustServerCertificate=True;";
 
+        // ───────── Хэширование ─────────
         public static string HashPassword(string password)
         {
             using var sha256 = SHA256.Create();
@@ -18,7 +19,6 @@ namespace WinFormsApp1
         }
 
         // ───────── Авторизация ─────────
-        // Возвращает role_id или -1 если не найден
         public static int Login(string login, string password)
         {
             string hash = HashPassword(password);
@@ -41,11 +41,9 @@ namespace WinFormsApp1
             }
         }
 
-        // ───────── Регистрация клиента (role_id = 4) ─────────
+        // ───────── Регистрация клиента (roleid = 4) ─────────
         public static bool Register(string login, string email, string password)
-        {
-            return RegisterWithRole(login, email, password, 4);
-        }
+            => RegisterWithRole(login, email, password, 4);
 
         // ───────── Регистрация сотрудника директором ─────────
         public static bool RegisterWithRole(string login, string email, string password, int roleId)
@@ -85,7 +83,7 @@ namespace WinFormsApp1
             }
         }
 
-        // ───────── Получить всех сотрудников (role_id 1-3) ─────────
+        // ───────── Получить всех сотрудников (roleid 1-3) ─────────
         public static DataTable GetEmployees()
         {
             try
@@ -93,13 +91,13 @@ namespace WinFormsApp1
                 using var conn = new SqlConnection(ConnectionString);
                 conn.Open();
                 using var cmd = new SqlCommand(
-                    @"SELECT id, login, email, 
-                        CASE roleid 
+                    @"SELECT id, login, email,
+                        CASE roleid
                             WHEN 1 THEN 'Директор'
                             WHEN 2 THEN 'Менеджер'
                             WHEN 3 THEN 'Аналитик'
                         END AS Роль
-                      FROM users WHERE roleid IN (1, 2, 3)
+                      FROM users WHERE roleid IN (1,2,3)
                       ORDER BY roleid, login", conn);
                 var dt = new DataTable();
                 using var adapter = new SqlDataAdapter(cmd);
@@ -131,6 +129,55 @@ namespace WinFormsApp1
                 MessageBox.Show($"Ошибка при удалении:\n{ex.Message}", "Ошибка",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
+            }
+        }
+
+        // ───────── Удалить пользователя по логину ─────────
+        public static bool DeleteUserByLogin(string login)
+        {
+            try
+            {
+                using var conn = new SqlConnection(ConnectionString);
+                conn.Open();
+
+                using var checkCmd = new SqlCommand(
+                    "SELECT COUNT(*) FROM users WHERE login = @login", conn);
+                checkCmd.Parameters.AddWithValue("@login", login);
+                int count = (int)checkCmd.ExecuteScalar();
+                if (count == 0) return false;
+
+                using var cmd = new SqlCommand(
+                    "DELETE FROM users WHERE login = @login", conn);
+                cmd.Parameters.AddWithValue("@login", login);
+                cmd.ExecuteNonQuery();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при удалении:\n{ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        // ───────── Получить любую таблицу для отчёта ─────────
+        public static DataTable GetTable(string tableName)
+        {
+            try
+            {
+                using var conn = new SqlConnection(ConnectionString);
+                conn.Open();
+                using var cmd = new SqlCommand($"SELECT * FROM [{tableName}]", conn);
+                var dt = new DataTable();
+                using var adapter = new SqlDataAdapter(cmd);
+                adapter.Fill(dt);
+                return dt;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки таблицы «{tableName}»:\n{ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new DataTable();
             }
         }
     }

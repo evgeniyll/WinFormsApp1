@@ -7,6 +7,15 @@ namespace WinFormsApp1
 
         private static readonly string[] RoleNames = { "", "Директор", "Менеджер", "Аналитик" };
 
+        // Словарь: название в списке → таблица в БД
+        private static readonly Dictionary<string, string> ReportTables = new()
+        {
+            { "Сотрудники",                 "users" },
+            { "Прейскурант",                "preuskyrant" },
+            { "Объёмы услуг за месяц",      "yslugi" },
+            { "Статистика",                 "statistiks" },
+        };
+
         public DirectorForm(string login, int roleId)
         {
             _login = login;
@@ -17,31 +26,55 @@ namespace WinFormsApp1
             ShowEmployeesTab();
         }
 
-        // ───────── Вкладки ─────────
+        // ───────── Переключение вкладок ─────────
+
+        private void SetAllTabsInactive()
+        {
+            foreach (Button btn in new[] { btnTabEmployees, btnTabAdd, btnTabDelete, btnTabReports })
+            {
+                btn.BackColor = Color.FromArgb(245, 245, 245);
+                btn.ForeColor = Color.FromArgb(60, 60, 60);
+            }
+            panelEmployees.Visible = false;
+            panelAdd.Visible = false;
+            panelDelete.Visible = false;
+            panelReports.Visible = false;
+        }
+
+        private void SetTabActive(Button btn, Panel panel)
+        {
+            SetAllTabsInactive();
+            btn.BackColor = Color.FromArgb(0, 150, 136);
+            btn.ForeColor = Color.White;
+            panel.Visible = true;
+        }
 
         private void btnTabEmployees_Click(object sender, EventArgs e) => ShowEmployeesTab();
         private void btnTabAdd_Click(object sender, EventArgs e) => ShowAddTab();
+        private void btnTabDelete_Click(object sender, EventArgs e) => ShowDeleteTab();
+        private void btnTabReports_Click(object sender, EventArgs e) => ShowReportsTab();
 
         private void ShowEmployeesTab()
         {
-            panelEmployees.Visible = true;
-            panelAdd.Visible = false;
-            btnTabEmployees.BackColor = Color.FromArgb(0, 150, 136);
-            btnTabEmployees.ForeColor = Color.White;
-            btnTabAdd.BackColor = Color.FromArgb(245, 245, 245);
-            btnTabAdd.ForeColor = Color.FromArgb(60, 60, 60);
+            SetTabActive(btnTabEmployees, panelEmployees);
             LoadEmployees();
         }
 
         private void ShowAddTab()
         {
-            panelEmployees.Visible = false;
-            panelAdd.Visible = true;
-            btnTabAdd.BackColor = Color.FromArgb(0, 150, 136);
-            btnTabAdd.ForeColor = Color.White;
-            btnTabEmployees.BackColor = Color.FromArgb(245, 245, 245);
-            btnTabEmployees.ForeColor = Color.FromArgb(60, 60, 60);
+            SetTabActive(btnTabAdd, panelAdd);
             ClearAddForm();
+        }
+
+        private void ShowDeleteTab()
+        {
+            SetTabActive(btnTabDelete, panelDelete);
+            ClearDeleteForm();
+        }
+
+        private void ShowReportsTab()
+        {
+            SetTabActive(btnTabReports, panelReports);
         }
 
         // ───────── Список сотрудников ─────────
@@ -53,46 +86,14 @@ namespace WinFormsApp1
 
             if (dgvEmployees.Columns.Count > 0)
             {
-                dgvEmployees.Columns["id"].HeaderText = "ID";
-                dgvEmployees.Columns["id"].Width = 50;
+                dgvEmployees.Columns["id"].HeaderText    = "ID";
+                dgvEmployees.Columns["id"].Width         = 50;
                 dgvEmployees.Columns["login"].HeaderText = "Логин";
-                dgvEmployees.Columns["login"].Width = 150;
+                dgvEmployees.Columns["login"].Width      = 150;
                 dgvEmployees.Columns["email"].HeaderText = "Email";
-                dgvEmployees.Columns["email"].Width = 200;
-                dgvEmployees.Columns["Роль"].HeaderText = "Роль";
-                dgvEmployees.Columns["Роль"].Width = 120;
-            }
-        }
-
-        private void btnDelete_Click(object sender, EventArgs e)
-        {
-            if (dgvEmployees.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("Выберите сотрудника для удаления.", "Внимание",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            var row = dgvEmployees.SelectedRows[0];
-            string login = row.Cells["login"].Value?.ToString() ?? "";
-            string role = row.Cells["Роль"].Value?.ToString() ?? "";
-            int id = Convert.ToInt32(row.Cells["id"].Value);
-
-            var confirm = MessageBox.Show(
-                $"Вы уверены, что хотите удалить сотрудника?\n\nЛогин: {login}\nРоль: {role}",
-                "Подтверждение удаления",
-                MessageBoxButtons.OKCancel,
-                MessageBoxIcon.Warning);
-
-            if (confirm == DialogResult.OK)
-            {
-                bool success = DatabaseHelper.DeleteUser(id);
-                if (success)
-                {
-                    MessageBox.Show($"Сотрудник «{login}» успешно удалён.", "Готово",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    LoadEmployees();
-                }
+                dgvEmployees.Columns["email"].Width      = 200;
+                dgvEmployees.Columns["Роль"].HeaderText  = "Роль";
+                dgvEmployees.Columns["Роль"].Width       = 120;
             }
         }
 
@@ -100,10 +101,10 @@ namespace WinFormsApp1
 
         private void btnAddEmployee_Click(object sender, EventArgs e)
         {
-            string login = txtAddLogin.Text.Trim();
-            string email = txtAddEmail.Text.Trim();
+            string login    = txtAddLogin.Text.Trim();
+            string email    = txtAddEmail.Text.Trim();
             string password = txtAddPassword.Text;
-            int roleId = cmbRole.SelectedIndex + 1; // 1=Директор, 2=Менеджер, 3=Аналитик
+            int roleId      = cmbRole.SelectedIndex + 1;
 
             if (string.IsNullOrEmpty(login) || login == "Логин" ||
                 string.IsNullOrEmpty(email) || email == "Email" ||
@@ -153,12 +154,66 @@ namespace WinFormsApp1
             lblAddError.Visible = false;
         }
 
+        // ───────── Удаление сотрудника по логину ─────────
+
+        private void btnDeleteEmployee_Click(object sender, EventArgs e)
+        {
+            string login = txtDeleteLogin.Text.Trim();
+
+            if (string.IsNullOrEmpty(login) || login == "Введите логин сотрудника")
+            {
+                lblDeleteError.Text = "Введите логин сотрудника.";
+                lblDeleteError.Visible = true;
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                $"Вы уверены, что хотите удалить сотрудника?\n\nЛогин: {login}",
+                "Подтверждение удаления",
+                MessageBoxButtons.OKCancel,
+                MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.OK) return;
+
+            bool success = DatabaseHelper.DeleteUserByLogin(login);
+            if (success)
+            {
+                lblDeleteError.Visible = false;
+                MessageBox.Show($"Сотрудник «{login}» успешно удалён.", "Готово",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ClearDeleteForm();
+            }
+            else
+            {
+                lblDeleteError.Text = "Сотрудник с таким логином не найден.";
+                lblDeleteError.Visible = true;
+            }
+        }
+
+        private void ClearDeleteForm()
+        {
+            SetPlaceholder(txtDeleteLogin, "Введите логин сотрудника");
+            lblDeleteError.Visible = false;
+        }
+
+        // ───────── Отчёты ─────────
+
+        private void cmbReports_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmbReports.SelectedIndex == -1) return;
+
+            string selected = cmbReports.SelectedItem?.ToString() ?? "";
+            if (!ReportTables.TryGetValue(selected, out string? tableName)) return;
+
+            var dt = DatabaseHelper.GetTable(tableName);
+            dgvReports.DataSource = dt;
+        }
+
         // ───────── Выход ─────────
 
         private void btnLogout_Click(object sender, EventArgs e)
         {
-            var loginForm = new LoginForm();
-            loginForm.Show();
+            new LoginForm().Show();
             this.Close();
         }
 
@@ -181,18 +236,11 @@ namespace WinFormsApp1
             }
         }
 
-        private void txtAddLogin_Enter(object sender, EventArgs e) =>
-            ClearPlaceholder(txtAddLogin, "Логин");
-        private void txtAddLogin_Leave(object sender, EventArgs e) =>
-            SetPlaceholder(txtAddLogin, "Логин");
-
-        private void txtAddEmail_Enter(object sender, EventArgs e) =>
-            ClearPlaceholder(txtAddEmail, "Email");
-        private void txtAddEmail_Leave(object sender, EventArgs e) =>
-            SetPlaceholder(txtAddEmail, "Email");
-
-        private void txtAddPassword_Enter(object sender, EventArgs e) =>
-            ClearPlaceholder(txtAddPassword, "Пароль", true);
+        private void txtAddLogin_Enter(object sender, EventArgs e)    => ClearPlaceholder(txtAddLogin, "Логин");
+        private void txtAddLogin_Leave(object sender, EventArgs e)    => SetPlaceholder(txtAddLogin, "Логин");
+        private void txtAddEmail_Enter(object sender, EventArgs e)    => ClearPlaceholder(txtAddEmail, "Email");
+        private void txtAddEmail_Leave(object sender, EventArgs e)    => SetPlaceholder(txtAddEmail, "Email");
+        private void txtAddPassword_Enter(object sender, EventArgs e) => ClearPlaceholder(txtAddPassword, "Пароль", true);
         private void txtAddPassword_Leave(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(txtAddPassword.Text))
@@ -202,5 +250,8 @@ namespace WinFormsApp1
                 txtAddPassword.ForeColor = Color.Silver;
             }
         }
+
+        private void txtDeleteLogin_Enter(object sender, EventArgs e) => ClearPlaceholder(txtDeleteLogin, "Введите логин сотрудника");
+        private void txtDeleteLogin_Leave(object sender, EventArgs e) => SetPlaceholder(txtDeleteLogin, "Введите логин сотрудника");
     }
 }
