@@ -70,12 +70,17 @@ namespace WinFormsApp1
             lblLoginError.Visible = false;
 
             // Открываем нужную форму в зависимости от роли
-            if (roleId == 1 || roleId == 2 || roleId == 3)
+            if (roleId == 1 || roleId == 2)
             {
                 var directorForm = new DirectorForm(login, roleId);
                 directorForm.Show();
                 this.Hide();
             }
+            else if (roleId == 3)
+            {
+                var analystForm = new AnalystForm(login, roleId);
+                analystForm.Show();
+                this.Hide();
             else
             {
                 // roleId == 4 — клиент, TODO: форма клиента

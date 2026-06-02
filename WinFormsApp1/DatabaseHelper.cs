@@ -180,5 +180,18 @@ namespace WinFormsApp1
                 return new DataTable();
             }
         }
+        // ───────── Сохранить таблицу (INSERT/UPDATE/DELETE) ─────────
+        public static void SaveTable(System.Data.DataTable dt, string tableName)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+            conn.Open();
+            using var adapter = new SqlDataAdapter($"SELECT * FROM [{tableName}]", conn);
+            using var builder  = new SqlCommandBuilder(adapter);
+            builder.QuotePrefix = "[";
+            builder.QuoteSuffix = "]";
+            adapter.Update(dt);
+            dt.AcceptChanges();
+        }
+
     }
 }

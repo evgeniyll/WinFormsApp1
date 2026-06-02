@@ -24,6 +24,9 @@
     <Compile Update="DirectorForm.Designer.cs">
       <DependentUpon>DirectorForm.cs</DependentUpon>
     </Compile>
+    <Compile Update="AnalystForm.Designer.cs">
+      <DependentUpon>AnalystForm.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
@@ -36,6 +39,9 @@
     </EmbeddedResource>
     <EmbeddedResource Update="DirectorForm.resx">
       <DependentUpon>DirectorForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="AnalystForm.resx">
+      <DependentUpon>AnalystForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
 
